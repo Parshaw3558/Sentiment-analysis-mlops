@@ -221,3 +221,6 @@ notebooks/
 local_s3/
 
 models/
+data/raw/
+data/interim/
+data/processed/
