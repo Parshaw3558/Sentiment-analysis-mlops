@@ -76,11 +76,14 @@ def main():
         # test_size = 0.2
         
         # df = load_data(data_url='https://raw.githubusercontent.com/vikashishere/Datasets/refs/heads/main/data.csv')
-        
     
 
         aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
         aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+        s3 = s3_connection.s3_operations("complaints-data-grid",aws_access_key,aws_secret_key)
+    
+
 
         
         # s3 = s3_connection.s3_operations("complaints-data-grid",os.getenv("AWS_ACCESS_KEY_ID"),os.getenv("AWS_SECRET_ACCESS_KEY"))
