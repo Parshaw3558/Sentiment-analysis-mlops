@@ -1,105 +1,99 @@
-import numpy as np
-import pandas as pd
-import pickle
-from sklearn.linear_model import LogisticRegression
-import yaml
-from src.logger import logging
-import mlflow
-import mlflow.sklearn
-import json
-import dagshub
 import os
-
-mlflow.set_tracking_uri("https://dagshub.com/Parshaw3558/sentiment-analysis-mlops.mlflow")
-
-
-
-dagshub.init(repo_owner="Parshaw3558",repo_name="sentiment-analysis-mlops",mlflow=True)
-
-def load_data(file_path: str) -> pd.DataFrame:
-    """Load data from a CSV file."""
-    try:
-        df = pd.read_csv(file_path)
-        logging.info('Data loaded from %s', file_path)
-        return df
-    except pd.errors.ParserError as e:
-        logging.error('Failed to parse the CSV file: %s', e)
-        raise
-    except Exception as e:
-        logging.error('Unexpected error occurred while loading the data: %s', e)
-        raise
-
-def train_model(X_train: np.ndarray, y_train: np.ndarray) -> LogisticRegression:
-    """Train the Logistic Regression model."""
-    try:
-        clf = LogisticRegression(C=1, solver='liblinear', penalty='l1')
-        clf.fit(X_train, y_train)
-        logging.info('Model training completed')
-        return clf
-    except Exception as e:
-        logging.error('Error during model training: %s', e)
-        raise
-
-def save_model(model, file_path: str) -> None:
-    """Save the trained model to a file."""
-    try:
-        with open(file_path, 'wb') as file:
-            pickle.dump(model, file)
-        logging.info('Model saved to %s', file_path)
-    except Exception as e:
-        logging.error('Error occurred while saving the model: %s', e)
-        raise
-
-import numpy as np
-import pandas as pd
+import json
 import pickle
-from sklearn.linear_model import LogisticRegression
-import yaml
-from src.logger import logging
+
+import dagshub
 import mlflow
 import mlflow.sklearn
-import json
+import numpy as np
+import pandas as pd
 
+from sklearn.linear_model import LogisticRegression
+from src.logger import logging
+
+
+# ---------------------------
+# DagsHub + MLflow Setup
+# ---------------------------
+
+token = os.getenv("DAGSHUB_TOKEN")
+
+if token:
+    try:
+        dagshub.auth.add_app_token(token)
+
+        dagshub.init(
+            repo_owner="Parshaw3558",
+            repo_name="sentiment-analysis-mlops",
+            mlflow=True
+        )
+
+        mlflow.set_tracking_uri(
+            "https://dagshub.com/Parshaw3558/sentiment-analysis-mlops.mlflow"
+        )
+
+        print("DagsHub MLflow connected successfully")
+
+    except Exception as e:
+        print(f"DagsHub initialization failed: {e}")
+else:
+    print("DAGSHUB_TOKEN not found. Running without DagsHub tracking.")
 
 
 def load_data(file_path: str) -> pd.DataFrame:
-    """Load data from a CSV file."""
     try:
         df = pd.read_csv(file_path)
-        logging.info('Data loaded from %s', file_path)
+        logging.info(f"Data loaded from {file_path}")
         return df
-    except pd.errors.ParserError as e:
-        logging.error('Failed to parse the CSV file: %s', e)
-        raise
+
     except Exception as e:
-        logging.error('Unexpected error occurred while loading the data: %s', e)
+        logging.error(f"Failed to load data: {e}")
         raise
 
-def train_model(X_train: np.ndarray, y_train: np.ndarray) -> LogisticRegression:
-    """Train the Logistic Regression model."""
+
+def train_model(
+    X_train: np.ndarray,
+    y_train: np.ndarray
+) -> LogisticRegression:
+
     try:
-        clf = LogisticRegression(C=1, solver='liblinear', penalty='l1')
+        clf = LogisticRegression(
+            C=1,
+            solver="liblinear",
+            penalty="l1"
+        )
+
         clf.fit(X_train, y_train)
-        logging.info('Model training completed')
+
+        logging.info("Model training completed")
+
         return clf
+
     except Exception as e:
-        logging.error('Error during model training: %s', e)
+        logging.error(f"Error during model training: {e}")
         raise
 
-def save_model(model, file_path: str) -> None:
-    """Save the trained model to a file."""
+
+def save_model(model, file_path: str):
+
     try:
-        with open(file_path, 'wb') as file:
-            pickle.dump(model, file)
-        logging.info('Model saved to %s', file_path)
+        with open(file_path, "wb") as f:
+            pickle.dump(model, f)
+
+        logging.info(f"Model saved to {file_path}")
+
     except Exception as e:
-        logging.error('Error occurred while saving the model: %s', e)
+        logging.error(f"Error saving model: {e}")
         raise
+
 
 def main():
+
     try:
 
-        train_data = load_data('./data/processed/train_bow.csv')
+        train_data = load_data(
+            "./data/processed/train_bow.csv"
+        )
 
         X_train = train_data.iloc[:, :-1].values
         y_train = train_data.iloc[:, -1].values
@@ -110,27 +104,68 @@ def main():
 
         with mlflow.start_run() as run:
 
-            clf = train_model(X_train, y_train)
+            clf = train_model(
+                X_train,
+                y_train
+            )
 
-            save_model(clf, 'models/model.pkl')
+            save_model(
+                clf,
+                "models/model.pkl"
+            )
 
-            mlflow.sklearn.log_model(sk_model=clf,artifact_path="model")
+            mlflow.sklearn.log_model(
+                sk_model=clf,
+                artifact_path="model"
+            )
 
-            model_info = {"run_id": run.info.run_id,"model_path": "model"}
+            model_info = {
+                "run_id": run.info.run_id,
+                "model_path": "model"
+            }
 
-            with open("reports/experiment_info.json", "w") as f:
-                json.dump(model_info, f, indent=4)
+            with open(
+                "reports/experiment_info.json",
+                "w"
+            ) as f:
+                json.dump(
+                    model_info,
+                    f,
+                    indent=4
+                )
 
-            mlflow.log_param("model_type", "LogisticRegression")
-            mlflow.log_param("solver", "liblinear")
-            mlflow.log_param("penalty", "l1")
-            mlflow.log_param("C", 1)
+            mlflow.log_param(
+                "model_type",
+                "LogisticRegression"
+            )
 
-            logging.info("Model logged to MLflow successfully")
+            mlflow.log_param(
+                "solver",
+                "liblinear"
+            )
+
+            mlflow.log_param(
+                "penalty",
+                "l1"
+            )
+
+            mlflow.log_param(
+                "C",
+                1
+            )
+
+            logging.info(
+                "Model logged successfully"
+            )
 
     except Exception as e:
-        logging.error('Failed to complete the model building process: %s', e)
-        print(f"Error: {e}")
 
-if __name__ == '__main__':
+        logging.error(
+            f"Failed to complete model building: {e}"
+        )
+
+        raise
+
+
+if __name__ == "__main__":
     main()
