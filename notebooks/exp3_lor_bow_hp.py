@@ -21,8 +21,8 @@ warnings.filterwarnings("ignore")
 # os.environ["MLFLOW_DISABLE_ARTIFACTS_DOWNLOAD"] = "1"
 
 # Set MLflow Tracking URI & DAGsHub integration
-MLFLOW_TRACKING_URI = "https://dagshub.com/vikashdas770/YT-Capstone-Project.mlflow"
-dagshub.init(repo_owner="vikashdas770", repo_name="YT-Capstone-Project", mlflow=True)
+MLFLOW_TRACKING_URI = "https://dagshub.com/Parshaw3558/sentiment-analysis-mlops.mlflow"
+dagshub.init(repo_owner="Parshaw3558", repo_name="sentiment-analysis-mlops", mlflow=True)
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("LoR Hyperparameter Tuning")
 
