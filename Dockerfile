@@ -18,7 +18,8 @@ ENV NLTK_DATA=/usr/share/nltk_data
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+#local
+# CMD ["python", "app.py"]
 
 #Prod
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "120", "app:app"]
